@@ -7,16 +7,16 @@ import java.rmi.RemoteException;
 
 import rmi.RemoteHelper;
 import service.IOService;
-import ui.MainFrame;
+import ui.LogInFrame;
 
 public class ClientRunner {
 	private RemoteHelper remoteHelper;
-	
+
 	public ClientRunner() {
 		linkToServer();
 		initGUI();
 	}
-	
+
 	private void linkToServer() {
 		try {
 			remoteHelper = RemoteHelper.getInstance();
@@ -30,12 +30,12 @@ public class ClientRunner {
 			e.printStackTrace();
 		}
 	}
-	
+
 	private void initGUI() {
-		MainFrame mainFrame = new MainFrame();
+		LogInFrame mainFrame = new LogInFrame();
 	}
-	
-	public void test(){
+
+	public void test() {
 		try {
 			System.out.println(remoteHelper.getUserService().login("admin", "123456a"));
 			System.out.println(remoteHelper.getIOService().writeFile("2", "admin", "testFile"));
@@ -43,9 +43,9 @@ public class ClientRunner {
 			e.printStackTrace();
 		}
 	}
-	
-	public static void main(String[] args){
+
+	public static void main(String[] args) {
 		ClientRunner cr = new ClientRunner();
-		//cr.test();
+		// cr.test();
 	}
 }
