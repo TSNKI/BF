@@ -36,6 +36,7 @@ class MainFrame extends JFrame {
 	private String fileName;
 	private CodeFile codeFile;
 
+	private JLabel codeInfoLabel;
 	private JTextArea codeArea = new JTextArea(20, 50);
 	private JTextArea paramArea = new JTextArea(4, 25);
 	private JTextArea resultArea = new JTextArea(4, 25);
@@ -43,7 +44,7 @@ class MainFrame extends JFrame {
 	public MainFrame(String username) {
 		// 创建窗体
 		this.username = username;
-		JFrame frame = new JFrame(this.username + "-" + this.fileName);
+		JFrame frame = new JFrame(this.username);
 		frame.setLayout(new BorderLayout());
 
 		MyMenuBar menuBar = new MyMenuBar();
@@ -73,9 +74,11 @@ class MainFrame extends JFrame {
 		} catch (RemoteException re) {
 			re.printStackTrace();
 		}
+		JMenuItem[] file = new JMenuItem[fileList.length];
 		for (int i = 0; i < fileList.length; i++) {
-			JMenuItem file = new JMenuItem(fileList[i]);
-			file.addActionListener(new openFileActionListener());
+			file[i] = new JMenuItem(fileList[i]);
+			openMenu.add(file[i]);
+			file[i].addActionListener(new OpenFileActionListener());
 		}
 
 		// "Save"子菜单
@@ -127,7 +130,17 @@ class MainFrame extends JFrame {
 		// 添加"Version"菜单
 		JMenu versionMenu = new JMenu("Version");
 		menuBar.add(versionMenu);
-		// TODO 实现版本功能
+		// "Version"子菜单
+		JMenuItem versionMenuItem = new JMenuItem("Choose version...");
+		versionMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO 版本选择窗口
+				new VersionFrame();
+			}
+
+		});
 
 		// 用户账户
 		menuBar.add(Box.createHorizontalGlue());
@@ -151,17 +164,23 @@ class MainFrame extends JFrame {
 		// 菜单栏
 		frame.setJMenuBar(menuBar);
 
-		/**
-		 * TODO 需美化代码区域 可能有的提示信息
-		 */
-
+		JPanel codePanel = new JPanel();
+		codePanel.setLayout(new BoxLayout(codePanel, BoxLayout.Y_AXIS));
+		codeInfoLabel = new JLabel("Code");
+		// 将提示加入代码区面板
+		codePanel.add(codeInfoLabel);
+		// 设置代码区
 		codeArea.setLineWrap(true);
 		codeArea.setMargin(new Insets(10, 10, 10, 10));
 		codeArea.setBackground(Color.LIGHT_GRAY);
+		// 滚动
 		JScrollPane codeScroller = new JScrollPane(codeArea);
 		codeScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		codeScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		frame.add(codeScroller, BorderLayout.CENTER);
+		// 将代码区加入代码面板
+		codePanel.add(codeScroller);
+		// 将代码面板加入中部面板
+		frame.add(codePanel, BorderLayout.CENTER);
 
 		// 参数+结果
 		JPanel southPanel = new JPanel();
@@ -216,12 +235,19 @@ class MainFrame extends JFrame {
 		frame.setVisible(true);
 	}
 
+	// 版本选择窗口
+	class VersionFrame extends JFrame {
+		VersionFrame() {
+			JFrame versionFrame = new JFrame("Choose version...");
+
+		}
+	}
+
 	// "Open"的子菜单的监听
-	class openFileActionListener implements ActionListener {
+	class OpenFileActionListener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// TODO Auto-generated method stub
 			String file = e.getActionCommand();
 			String fileContent = null;
 			try {
@@ -232,6 +258,19 @@ class MainFrame extends JFrame {
 			codeFile = new CodeFile(file, fileContent);
 			codeArea.setText(codeFile.getLatestCode());
 			fileName = file;
+			codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
+		}
+
+	}
+
+	// "Version"的子菜单监听
+	class VersionActionListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			String version = e.getActionCommand();
+			codeArea.setText(codeFile.getCode(version));
 		}
 
 	}

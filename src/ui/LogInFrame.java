@@ -11,6 +11,7 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import rmi.RemoteHelper;
 
@@ -56,7 +57,7 @@ public class LogInFrame extends JFrame {
 		passwordPanel.setLayout(new GridLayout(1, 2));
 		JLabel passwordLabel = new JLabel("    password:");
 		passwordPanel.add(passwordLabel);
-		JTextField passwordTextArea = new JTextField(1);
+		JPasswordField passwordTextArea = new JPasswordField(1);
 		passwordTextArea.setBackground(Color.WHITE);
 		passwordTextArea.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1, false));
 		passwordPanel.add(passwordTextArea);
@@ -100,11 +101,22 @@ public class LogInFrame extends JFrame {
 		// 注册按钮
 		JButton registerButton = new JButton("register");
 		registerButton.addActionListener(new ActionListener() {
-			
+
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
-				
+				username = userNameTextArea.getText();
+				password = passwordTextArea.getText();
+				try {
+					if (RemoteHelper.getInstance().getUserService().register(username, password)) {
+						frame.dispose();
+						new MainFrame(username);
+					} else {
+						warningLabel.setText("User already exists!");
+					}
+				} catch (RemoteException re) {
+					re.printStackTrace();
+				}
+
 			}
 		});
 		operatePanel.add(registerButton);
@@ -125,4 +137,3 @@ public class LogInFrame extends JFrame {
 	}
 
 }
-

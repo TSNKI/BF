@@ -40,7 +40,19 @@ public class CodeFile {
 	}
 
 	public String getLatestCode() {
-		return codeVersions.get(codeVersions.size() - 1).getCode();
+		if (codeVersions.size() != 0) {
+			return codeVersions.get(codeVersions.size() - 1).getCode();
+		} else {
+			return "";
+		}
+	}
+	
+	public String getLatestVersion(){
+		if (codeVersions.size() != 0) {
+			return codeVersions.get(codeVersions.size() - 1).getVersion();
+		} else {
+			return "";
+		}
 	}
 
 	public String[] getVersionList() {
