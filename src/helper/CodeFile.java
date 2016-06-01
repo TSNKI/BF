@@ -28,16 +28,16 @@ public class CodeFile {
 	}
 
 	public String getCode(String version) {
-		for(int i=0;i<codeVersions.size();i++){
-			if(codeVersions.get(i).getVersion().equals(version)){
+		for (int i = 0; i < codeVersions.size(); i++) {
+			if (codeVersions.get(i).getVersion().equals(version)) {
 				return codeVersions.get(i).getCode();
 			}
 		}
 		return null;
 	}
-	
-	public String getLatestCode(){
-		return codeVersions.get(codeVersions.size()-1).getCode();
+
+	public String getLatestCode() {
+		return codeVersions.get(codeVersions.size() - 1).getCode();
 	}
 
 	public String[] getVersionList() {
@@ -48,8 +48,12 @@ public class CodeFile {
 		return versionList;
 	}
 
-	public String toBeWrote() {
-		// TODO
-		return null;
+	public String fileContent() {
+		String fileContent = "";
+		for (int i = 0; i < codeVersions.size(); i++) {
+			fileContent += codeVersions.get(i).getVersion() + "\n";
+			fileContent += codeVersions.get(i).getCode() + "\n";
+		}
+		return fileContent;
 	}
 }

@@ -87,7 +87,7 @@ class MainFrame extends JFrame {
 				String code = codeArea.getText();
 				codeFile.addCode(code);
 				try {
-					RemoteHelper.getInstance().getIOService().writeFile(codeFile.toBeWrote(), username, fileName);
+					RemoteHelper.getInstance().getIOService().writeFile(codeFile.fileContent(), username, fileName);
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -152,7 +152,7 @@ class MainFrame extends JFrame {
 		frame.setJMenuBar(menuBar);
 
 		/**
-		 * TODO 需美化代码区域  可能有的提示信息
+		 * TODO 需美化代码区域 可能有的提示信息
 		 */
 
 		codeArea.setLineWrap(true);
