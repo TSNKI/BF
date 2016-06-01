@@ -10,8 +10,11 @@ public class CodeFile {
 	public CodeFile(String fileName, String fileContent) {
 		this.fileName = fileName;
 		String[] temp = fileContent.split("\n");
-		for (int i = 0; i < temp.length; i += 2) {
-			codeVersions.add(new CodeVersion(temp[i], temp[i + 1]));
+		for (int i = 0; i < temp.length; i++) {
+			if (temp[i].startsWith("# ")) {
+				codeVersions.add(new CodeVersion(temp[i].substring(2), temp[i + 1]));
+			}
+
 		}
 	}
 
@@ -51,7 +54,7 @@ public class CodeFile {
 	public String fileContent() {
 		String fileContent = "";
 		for (int i = 0; i < codeVersions.size(); i++) {
-			fileContent += codeVersions.get(i).getVersion() + "\n";
+			fileContent += "# " + codeVersions.get(i).getVersion() + "\n";
 			fileContent += codeVersions.get(i).getCode() + "\n";
 		}
 		return fileContent;
