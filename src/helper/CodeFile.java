@@ -28,16 +28,7 @@ public class CodeFile {
 	}
 
 	public String getCode(String version) {
-		for(int i=0;i<codeVersions.size();i++){
-			if(codeVersions.get(i).getVersion().equals(version)){
-				return codeVersions.get(i).getCode();
-			}
-		}
-		return null;
-	}
-	
-	public String getLatestCode(){
-		return codeVersions.get(codeVersions.size()-1).getCode();
+		return codeVersions.get(Integer.valueOf(version) - 1).getCode();
 	}
 
 	public String[] getVersionList() {
