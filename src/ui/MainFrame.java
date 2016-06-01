@@ -43,7 +43,7 @@ class MainFrame extends JFrame {
 	public MainFrame(String username) {
 		// 创建窗体
 		this.username = username;
-		JFrame frame = new JFrame(this.username);
+		JFrame frame = new JFrame(this.username + "-" + this.fileName);
 		frame.setLayout(new BorderLayout());
 
 		MyMenuBar menuBar = new MyMenuBar();
@@ -52,6 +52,7 @@ class MainFrame extends JFrame {
 		// 添加"File"菜单
 		JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
+		// "New"子菜单
 		JMenuItem newMenuItem = new JMenuItem("New");
 		newMenuItem.addActionListener(new ActionListener() {
 
@@ -61,22 +62,23 @@ class MainFrame extends JFrame {
 			}
 		});
 		fileMenu.add(newMenuItem);
-		JMenuItem openMenuItem = new JMenuItem("Open");
-		openMenuItem.addActionListener(new ActionListener() {
+		// "Open"子菜单
+		JMenu openMenu = new JMenu("Open");
+		fileMenu.add(openMenu);
+		// "Open"下二级子菜单（文件列表）
+		String[] fileList = null;
+		try {
+			// 读取文件列表
+			fileList = RemoteHelper.getInstance().getIOService().readFileList(username).split("\n");
+		} catch (RemoteException re) {
+			re.printStackTrace();
+		}
+		for (int i = 0; i < fileList.length; i++) {
+			JMenuItem file = new JMenuItem(fileList[i]);
+			file.addActionListener(new openFileActionListener());
+		}
 
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				// TODO "Open"菜单监听
-				// TODO"Open"窗口
-				class OpenFrame extends JFrame {
-					OpenFrame() {
-						JFrame openFrame = new JFrame();
-					}
-				}
-
-			}
-		});
-		fileMenu.add(openMenuItem);
+		// "Save"子菜单
 		JMenuItem saveMenuItem = new JMenuItem("Save");
 		saveMenuItem.addActionListener(new ActionListener() {
 
@@ -84,10 +86,8 @@ class MainFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				String code = codeArea.getText();
 				codeFile.addCode(code);
-
 				try {
-					// TODO 需要改变传入的参数
-					RemoteHelper.getInstance().getIOService().writeFile(codeFile.toBeWrote(), username, "code");
+					RemoteHelper.getInstance().getIOService().writeFile(codeFile.toBeWrote(), username, fileName);
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -99,8 +99,8 @@ class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO "Exit"菜单监听
-
+				// TODO "Exit"菜单监听，待添加提示保存
+				frame.dispose();
 			}
 		});
 		fileMenu.add(exitMenuItem);
@@ -131,13 +131,12 @@ class MainFrame extends JFrame {
 
 		// 用户账户
 		menuBar.add(Box.createHorizontalGlue());
-		JMenu accountMenu = new JMenu(this.username);// TODO 账户名
+		JMenu accountMenu = new JMenu(this.username);
 		menuBar.add(accountMenu);
 		JMenuItem logoutMenuItem = new JMenuItem("log out");
 		logoutMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO 登出
 				try {
 					RemoteHelper.getInstance().getUserService().logout("admin");
 					frame.dispose();
@@ -153,7 +152,7 @@ class MainFrame extends JFrame {
 		frame.setJMenuBar(menuBar);
 
 		/**
-		 * TODO 需美化代码区域 1、文件名称 2、可能有的提示信息
+		 * TODO 需美化代码区域  可能有的提示信息
 		 */
 
 		codeArea.setLineWrap(true);
@@ -215,6 +214,26 @@ class MainFrame extends JFrame {
 		frame.setSize(500, 400);
 		frame.setLocation(400, 200);
 		frame.setVisible(true);
+	}
+
+	// "Open"的子菜单的监听
+	class openFileActionListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			// TODO Auto-generated method stub
+			String file = e.getActionCommand();
+			String fileContent = null;
+			try {
+				fileContent = RemoteHelper.getInstance().getIOService().readFile(username, file);
+			} catch (RemoteException re) {
+				re.printStackTrace();
+			}
+			codeFile = new CodeFile(file, fileContent);
+			codeArea.setText(codeFile.getLatestCode());
+			fileName = file;
+		}
+
 	}
 
 }
