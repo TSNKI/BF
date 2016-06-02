@@ -81,7 +81,7 @@ public class LogInFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				username = userNameTextArea.getText();
-				password = passwordTextArea.getText();
+				password = new String(passwordTextArea.getPassword());
 				try {
 					if (RemoteHelper.getInstance().getUserService().login(username, password)) {
 						frame.dispose();
@@ -105,7 +105,7 @@ public class LogInFrame extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				username = userNameTextArea.getText();
-				password = passwordTextArea.getText();
+				password = new String(passwordTextArea.getPassword());
 				try {
 					if (RemoteHelper.getInstance().getUserService().register(username, password)) {
 						frame.dispose();
@@ -130,7 +130,7 @@ public class LogInFrame extends JFrame {
 
 		frame.setDefaultCloseOperation(EXIT_ON_CLOSE);
 		frame.setSize(400, 150);
-		frame.setLocation(400, 200);
+		frame.setLocation(450, 250);
 		frame.setResizable(false);
 		frame.setVisible(true);
 

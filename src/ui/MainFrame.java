@@ -8,6 +8,8 @@ import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.rmi.RemoteException;
 
 import javax.swing.AbstractListModel;
@@ -21,10 +23,15 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import helper.CodeFile;
 import rmi.RemoteHelper;
@@ -36,9 +43,12 @@ class MainFrame extends JFrame {
 	 */
 	private static final long serialVersionUID = 1L;
 
+	private boolean isSaved = false;
+
 	private String username;
 	private String fileName;
 	private CodeFile codeFile;
+	private JMenu openMenu;
 
 	private JLabel codeInfoLabel;
 	private JTextArea codeArea = new JTextArea(20, 50);
@@ -61,18 +71,19 @@ class MainFrame extends JFrame {
 		fileMenu.setMnemonic('F');
 		// "New"子菜单
 		JMenuItem newMenuItem = new JMenuItem("New");
+		newMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.CTRL_MASK));
 		// 设置快捷键
 		newMenuItem.setMnemonic('N');
 		newMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO "New"菜单监听
+				new NewFrame();
 			}
 		});
 		fileMenu.add(newMenuItem);
 		// "Open"子菜单
-		JMenu openMenu = new JMenu("Open");
+		openMenu = new JMenu("Open");
 		fileMenu.add(openMenu);
 		// 设置快捷键
 		openMenu.setMnemonic('O');
@@ -84,17 +95,18 @@ class MainFrame extends JFrame {
 		} catch (RemoteException re) {
 			re.printStackTrace();
 		}
-		JMenuItem[] file = new JMenuItem[fileList.length];
+		JMenuItem[] files = new JMenuItem[fileList.length];
 		for (int i = 0; i < fileList.length; i++) {
-			file[i] = new JMenuItem(fileList[i]);
-			openMenu.add(file[i]);
-			file[i].addActionListener(new OpenFileActionListener());
+			files[i] = new JMenuItem(fileList[i]);
+			openMenu.add(files[i]);
+			files[i].addActionListener(new OpenFileActionListener());
 		}
 
 		// "Save"子菜单
 		JMenuItem saveMenuItem = new JMenuItem("Save");
 		// 设置快捷键
 		saveMenuItem.setMnemonic('S');
+		saveMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK));
 		saveMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -103,6 +115,8 @@ class MainFrame extends JFrame {
 				codeFile.addCode(code);
 				try {
 					RemoteHelper.getInstance().getIOService().writeFile(codeFile.fileContent(), username, fileName);
+					codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
+					isSaved = true;
 				} catch (RemoteException re) {
 					re.printStackTrace();
 				}
@@ -113,12 +127,37 @@ class MainFrame extends JFrame {
 		JMenuItem exitMenuItem = new JMenuItem("Exit");
 		// 设置快捷键
 		exitMenuItem.setMnemonic('E');
+		exitMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F4, InputEvent.CTRL_MASK));
 		exitMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO "Exit"菜单监听，待添加提示保存
-				frame.dispose();
+				if (isSaved) {
+					frame.dispose();
+				} else {
+					int option = JOptionPane.showConfirmDialog(frame, "Code has been changed. Save?", "Not saved",
+							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+					switch (option) {
+					case JOptionPane.YES_OPTION:
+						String code = codeArea.getText();
+						codeFile.addCode(code);
+						try {
+							RemoteHelper.getInstance().getIOService().writeFile(codeFile.fileContent(), username,
+									fileName);
+							codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
+							isSaved = true;
+						} catch (RemoteException re) {
+							re.printStackTrace();
+						}
+						frame.dispose();
+						break;
+					case JOptionPane.NO_OPTION:
+						frame.dispose();
+						break;
+					case JOptionPane.CANCEL_OPTION:
+						break;
+					}
+				}
 			}
 		});
 		fileMenu.add(exitMenuItem);
@@ -131,6 +170,7 @@ class MainFrame extends JFrame {
 		JMenuItem executeMenuItem = new JMenuItem("Execute");
 		// 设置快捷键
 		executeMenuItem.setMnemonic('E');
+		executeMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_F11, InputEvent.CTRL_MASK));
 		executeMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -159,7 +199,6 @@ class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO 版本选择窗口
 				new VersionFrame();
 			}
 
@@ -170,7 +209,9 @@ class MainFrame extends JFrame {
 		menuBar.add(Box.createHorizontalGlue());
 		JMenu accountMenu = new JMenu(this.username);
 		menuBar.add(accountMenu);
-		JMenuItem logoutMenuItem = new JMenuItem("log out");
+		JMenuItem logoutMenuItem = new JMenuItem("Log out");
+		logoutMenuItem.setMnemonic('L');
+		logoutMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_Q, InputEvent.CTRL_MASK));
 		logoutMenuItem.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -197,6 +238,7 @@ class MainFrame extends JFrame {
 		codeArea.setLineWrap(true);
 		codeArea.setMargin(new Insets(10, 10, 10, 10));
 		codeArea.setBackground(Color.LIGHT_GRAY);
+		codeArea.getDocument().addDocumentListener(new TextChangedListener());
 		// 滚动
 		JScrollPane codeScroller = new JScrollPane(codeArea);
 		codeScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -292,6 +334,7 @@ class MainFrame extends JFrame {
 					String version = (String) versionComboBox.getSelectedItem();
 					codeInfoLabel.setText("Code - " + fileName + " - " + version);
 					codeArea.setText(codeFile.getCode(version));
+					isSaved = true;
 					versionFrame.dispose();
 				}
 
@@ -340,6 +383,71 @@ class MainFrame extends JFrame {
 
 	}
 
+	// "New"菜单按下的弹出窗口
+	class NewFrame extends JFrame {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
+		NewFrame() {
+			JFrame newFrame = new JFrame();
+			JPanel newPanel = new JPanel();
+			newPanel.setLayout(new GridLayout(3, 1));
+
+			JPanel inputPanel = new JPanel();
+			JLabel promptLabel = new JLabel("Name:");
+			inputPanel.add(promptLabel);
+			JTextField inputField = new JTextField(15);
+			inputPanel.add(inputField);
+			newPanel.add(inputPanel);
+
+			JLabel prompt = new JLabel(" ");
+			newPanel.add(prompt);
+
+			JPanel confirmPanel = new JPanel();
+			confirmPanel.setLayout(new GridLayout(1, 3));
+			JLabel leftLabel = new JLabel(" ");
+			JLabel rightLabel = new JLabel(" ");
+			JButton confirmButton = new JButton("Confirm");
+			confirmButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					if (inputField.getText().equals("")) {
+						prompt.setText("Please input your filename!");
+					} else {
+						fileName = inputField.getText();
+						codeInfoLabel.setText("Code - " + fileName); // 改变代码区名字
+
+						codeFile = new CodeFile(fileName); // 实例化新的代码文件对象
+
+						// 向"Open"菜单下添加新的子菜单
+						JMenuItem file = new JMenuItem(fileName);
+						openMenu.add(file);
+						file.addActionListener(new OpenFileActionListener());
+
+						isSaved = false;
+
+						// 关闭本窗口
+						newFrame.dispose();
+					}
+				}
+
+			});
+			confirmPanel.add(leftLabel);
+			confirmPanel.add(confirmButton);
+			confirmPanel.add(rightLabel);
+			newPanel.add(confirmPanel);
+
+			newFrame.add(newPanel);
+			newFrame.setSize(270, 120);
+			newFrame.setLocation(450, 250);
+			newFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			newFrame.setVisible(true);
+		}
+	}
+
 	// "Open"的子菜单的监听
 	class OpenFileActionListener implements ActionListener {
 
@@ -356,22 +464,33 @@ class MainFrame extends JFrame {
 			codeArea.setText(codeFile.getLatestCode());
 			fileName = file;
 			codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
+			isSaved = true;
 		}
 
 	}
 
-	// "Version"的子菜单监听
-	class VersionActionListener implements ActionListener {
+	// 代码区文本更新监听
+	class TextChangedListener implements DocumentListener {
 
 		@Override
-		public void actionPerformed(ActionEvent e) {
+		public void insertUpdate(DocumentEvent e) {
 			// TODO Auto-generated method stub
-			String version = e.getActionCommand();
-			codeArea.setText(codeFile.getCode(version));
+			isSaved = false;
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			// TODO Auto-generated method stub
+			isSaved = false;
+		}
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			// TODO Auto-generated method stub
+			isSaved = false;
 		}
 
 	}
-
 }
 
 class MyMenuBar extends JMenuBar {
