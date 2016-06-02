@@ -10,8 +10,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.rmi.RemoteException;
 
+import javax.swing.AbstractListModel;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ComboBoxModel;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -53,8 +57,12 @@ class MainFrame extends JFrame {
 		// 添加"File"菜单
 		JMenu fileMenu = new JMenu("File");
 		menuBar.add(fileMenu);
+		// 设置快捷键
+		fileMenu.setMnemonic('F');
 		// "New"子菜单
 		JMenuItem newMenuItem = new JMenuItem("New");
+		// 设置快捷键
+		newMenuItem.setMnemonic('N');
 		newMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -66,6 +74,8 @@ class MainFrame extends JFrame {
 		// "Open"子菜单
 		JMenu openMenu = new JMenu("Open");
 		fileMenu.add(openMenu);
+		// 设置快捷键
+		openMenu.setMnemonic('O');
 		// "Open"下二级子菜单（文件列表）
 		String[] fileList = null;
 		try {
@@ -83,6 +93,8 @@ class MainFrame extends JFrame {
 
 		// "Save"子菜单
 		JMenuItem saveMenuItem = new JMenuItem("Save");
+		// 设置快捷键
+		saveMenuItem.setMnemonic('S');
 		saveMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -97,7 +109,10 @@ class MainFrame extends JFrame {
 			}
 		});
 		fileMenu.add(saveMenuItem);
+		// "Exit"子菜单
 		JMenuItem exitMenuItem = new JMenuItem("Exit");
+		// 设置快捷键
+		exitMenuItem.setMnemonic('E');
 		exitMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -110,8 +125,12 @@ class MainFrame extends JFrame {
 
 		// 添加"Run"菜单
 		JMenu runMenu = new JMenu("Run");
+		// 设置快捷键
+		runMenu.setMnemonic('R');
 		menuBar.add(runMenu);
 		JMenuItem executeMenuItem = new JMenuItem("Execute");
+		// 设置快捷键
+		executeMenuItem.setMnemonic('E');
 		executeMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -129,9 +148,13 @@ class MainFrame extends JFrame {
 
 		// 添加"Version"菜单
 		JMenu versionMenu = new JMenu("Version");
+		// 设置快捷键
+		versionMenu.setMnemonic('V');
 		menuBar.add(versionMenu);
 		// "Version"子菜单
 		JMenuItem versionMenuItem = new JMenuItem("Choose version...");
+		// 设置快捷键
+		versionMenuItem.setMnemonic('C');
 		versionMenuItem.addActionListener(new ActionListener() {
 
 			@Override
@@ -141,6 +164,7 @@ class MainFrame extends JFrame {
 			}
 
 		});
+		versionMenu.add(versionMenuItem);
 
 		// 用户账户
 		menuBar.add(Box.createHorizontalGlue());
@@ -237,10 +261,83 @@ class MainFrame extends JFrame {
 
 	// 版本选择窗口
 	class VersionFrame extends JFrame {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+
 		VersionFrame() {
 			JFrame versionFrame = new JFrame("Choose version...");
+			JPanel versionPanel = new JPanel();
+			versionPanel.setLayout(new GridLayout(3, 1));
 
+			JPanel versionChoosePanel = new JPanel();
+			JLabel promptLabel = new JLabel("choose:");
+			JComboBox<String> versionComboBox = new JComboBox<>(new VersionComboBox());
+			versionChoosePanel.add(promptLabel);
+			versionChoosePanel.add(versionComboBox);
+			versionPanel.add(versionChoosePanel);
+
+			versionPanel.add(new JLabel(" "));
+
+			JPanel confirmPanel = new JPanel();
+			confirmPanel.setLayout(new GridLayout(1, 3));
+			JLabel leftLabel = new JLabel(" ");
+			JLabel rightLabel = new JLabel(" ");
+			JButton confirmButton = new JButton("Confirm");
+			confirmButton.addActionListener(new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					String version = (String) versionComboBox.getSelectedItem();
+					codeInfoLabel.setText("Code - " + fileName + " - " + version);
+					codeArea.setText(codeFile.getCode(version));
+					versionFrame.dispose();
+				}
+
+			});
+			confirmPanel.add(leftLabel);
+			confirmPanel.add(confirmButton);
+			confirmPanel.add(rightLabel);
+			versionPanel.add(confirmPanel);
+
+			versionFrame.add(versionPanel);
+			versionFrame.setSize(270, 120);
+			versionFrame.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+			versionFrame.setLocation(400, 200);
+			versionFrame.setVisible(true);
 		}
+	}
+
+	// 版本选择下拉表单
+	class VersionComboBox extends AbstractListModel<String> implements ComboBoxModel<String> {
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 1L;
+		String selectedItem = null;
+		String[] versionList = codeFile.getVersionList();
+
+		@Override
+		public int getSize() {
+			return versionList.length;
+		}
+
+		@Override
+		public String getElementAt(int index) {
+			return versionList[index];
+		}
+
+		@Override
+		public void setSelectedItem(Object anItem) {
+			selectedItem = (String) anItem;
+		}
+
+		@Override
+		public Object getSelectedItem() {
+			return selectedItem;
+		}
+
 	}
 
 	// "Open"的子菜单的监听

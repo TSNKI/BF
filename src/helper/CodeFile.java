@@ -1,6 +1,9 @@
 package helper;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 
 public class CodeFile {
 
@@ -14,7 +17,6 @@ public class CodeFile {
 			if (temp[i].startsWith("# ")) {
 				codeVersions.add(new CodeVersion(temp[i].substring(2), temp[i + 1]));
 			}
-
 		}
 	}
 
@@ -27,7 +29,7 @@ public class CodeFile {
 	}
 
 	public void addCode(String code) {
-		codeVersions.add(new CodeVersion(Integer.toString(codeVersions.size() + 1), code));
+		codeVersions.add(new CodeVersion(this.getTime(), code));
 	}
 
 	public String getCode(String version) {
@@ -46,8 +48,8 @@ public class CodeFile {
 			return "";
 		}
 	}
-	
-	public String getLatestVersion(){
+
+	public String getLatestVersion() {
 		if (codeVersions.size() != 0) {
 			return codeVersions.get(codeVersions.size() - 1).getVersion();
 		} else {
@@ -70,5 +72,12 @@ public class CodeFile {
 			fileContent += codeVersions.get(i).getCode() + "\n";
 		}
 		return fileContent;
+	}
+
+	public String getTime() {
+		Date date = new Date();
+		DateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		String time = format.format(date);
+		return time;
 	}
 }
