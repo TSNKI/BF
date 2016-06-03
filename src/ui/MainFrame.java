@@ -49,6 +49,7 @@ class MainFrame extends JFrame {
 
 	private boolean isSaved = false;
 	private boolean isTyping = false;
+	private boolean typedAChar = false;
 
 	private Timer timer = new Timer();;
 
@@ -193,6 +194,8 @@ class MainFrame extends JFrame {
 					codeListPtr--;
 					codeArea.setText(historyCode.get(codeListPtr));
 				}
+				System.out.println(codeListPtr + 1);
+				System.out.println(historyCode.size());
 			}
 
 		});
@@ -207,13 +210,14 @@ class MainFrame extends JFrame {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				// TODO Auto-generated method stub
 				if ((codeListPtr == -1) || (codeListPtr + 1 == historyCode.size())) {
 					// 什么都不做
 				} else {
 					codeListPtr++;
 					codeArea.setText(historyCode.get(codeListPtr));
 				}
+				System.out.println(codeListPtr + 1);
+				System.out.println(historyCode.size());
 			}
 
 		});
@@ -522,17 +526,18 @@ class MainFrame extends JFrame {
 				re.printStackTrace();
 			}
 			codeFile = new CodeFile(file, fileContent);
+			while (historyCode.size() != 0) {
+				historyCode.remove(0);
+			}
+			historyCode.add(codeFile.getLatestCode());
+			codeListPtr = 0;
 			codeArea.setText(codeFile.getLatestCode());
 			fileName = file;
 			codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
 			isSaved = true;
 			codeArea.setEditable(true);
 			codeArea.setBackground(Color.WHITE);
-			while (historyCode.size() != 0) {
-				historyCode.remove(0);
-			}
-			historyCode.add(codeArea.getText());
-			codeListPtr = 0;
+
 		}
 
 	}
@@ -543,18 +548,65 @@ class MainFrame extends JFrame {
 		@Override
 		public void insertUpdate(DocumentEvent e) {
 			isSaved = false;
+			System.out.println("insert");
+			if (typedAChar) {
+				addCodeHistory();
+				typedAChar = false;
+			} else {
+
+			}
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
 			isSaved = false;
+			System.out.println("remove");
+			if (typedAChar) {
+				addCodeHistory();
+				typedAChar = false;
+			} else {
+
+			}
 		}
 
 		@Override
 		public void changedUpdate(DocumentEvent e) {
 			isSaved = false;
+			System.out.println("changed");
 		}
 
+		public void addCodeHistory() {
+			TimerTask task = new TimerTask() {
+
+				@Override
+				public void run() {
+					isTyping = false;
+					if (codeListPtr == 4) {
+						historyCode.remove(0);
+						historyCode.add(codeArea.getText());
+					} else if (codeListPtr + 1 < historyCode.size()) {
+						for (int i = codeListPtr + 1; i < historyCode.size(); i++) {
+							historyCode.remove(i);
+						}
+						historyCode.add(codeArea.getText());
+						codeListPtr++;
+					} else {
+						historyCode.add(codeArea.getText());
+						codeListPtr++;
+					}
+					System.out.println(codeListPtr + 1);
+					System.out.println(historyCode.size());
+				}
+			};
+			if (isTyping) {
+				timer.cancel();
+				timer = new Timer();
+				timer.schedule(task, 500);
+			} else {
+				isTyping = true;
+				timer.schedule(task, 500);
+			}
+		}
 	}
 
 	// 代码区焦点监听
@@ -577,44 +629,20 @@ class MainFrame extends JFrame {
 
 		@Override
 		public void keyTyped(KeyEvent e) {
-			if (((int) e.getKeyChar() == 46) || ((int) e.getKeyChar() == 44) || ((int) e.getKeyChar() == 60)
-					|| ((int) e.getKeyChar() == 62) || ((int) e.getKeyChar() == 91) || ((int) e.getKeyChar() == 93)
-					|| ((int) e.getKeyChar() == 43) || ((int) e.getKeyChar() == 45)) {
-				TimerTask task = new TimerTask() {
-
-					@Override
-					public void run() {
-						isTyping = false;
-						if (codeListPtr == 4) {
-							historyCode.remove(0);
-							historyCode.add(codeArea.getText());
-						} else if (codeListPtr + 1 < historyCode.size()) {
-							for (int i = codeListPtr + 1; i < historyCode.size(); i++) {
-								historyCode.remove(i);
-							}
-							historyCode.add(codeArea.getText());
-							codeListPtr++;
-						} else {
-							historyCode.add(codeArea.getText());
-							codeListPtr++;
-						}
-					}
-				};
-				if (isTyping) {
-					timer.cancel();
-					timer = new Timer();
-					timer.schedule(task, 500);
-				} else {
-					isTyping = true;
-					timer.schedule(task, 500);
-				}
-			}
 
 		}
 
 		@Override
 		public void keyPressed(KeyEvent e) {
 			// System.out.println("Pressed "+e.getKeyChar());
+			if (((int) e.getKeyChar() == 46) || ((int) e.getKeyChar() == 44) || ((int) e.getKeyChar() == 60)
+					|| ((int) e.getKeyChar() == 62) || ((int) e.getKeyChar() == 91) || ((int) e.getKeyChar() == 93)
+					|| ((int) e.getKeyChar() == 43) || ((int) e.getKeyChar() == 45)
+					|| ((int) e.getKeyChar() == (int) '\b') || (e.getKeyChar() == 22)
+					|| (e.getKeyChar() == 24)) {
+				typedAChar = true;
+				System.out.println(typedAChar);
+			}
 		}
 
 		@Override
