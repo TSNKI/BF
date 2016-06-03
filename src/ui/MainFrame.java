@@ -10,7 +10,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.AbstractListModel;
 import javax.swing.Box;
@@ -44,6 +48,12 @@ class MainFrame extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	private boolean isSaved = false;
+	private boolean isTyping = false;
+
+	private Timer timer = new Timer();;
+
+	private ArrayList<String> historyCode = new ArrayList<String>();
+	private int codeListPtr = -1;
 
 	private String username;
 	private String fileName;
@@ -162,6 +172,53 @@ class MainFrame extends JFrame {
 		});
 		fileMenu.add(exitMenuItem);
 
+		// 添加"Edit"菜单
+		JMenu editMenu = new JMenu("Edit");
+		// 设置快捷键
+		editMenu.setMnemonic('E');
+		menuBar.add(editMenu);
+		// 添加"Undo"子菜单
+		JMenuItem undoMenuItem = new JMenuItem("Undo");
+		// 设置快捷键
+		undoMenuItem.setMnemonic('U');
+		undoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.CTRL_MASK));
+		// 添加监听
+		undoMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if ((codeListPtr == -1) || (codeListPtr == 0)) {
+					// 什么都不做
+				} else {
+					codeListPtr--;
+					codeArea.setText(historyCode.get(codeListPtr));
+				}
+			}
+
+		});
+		editMenu.add(undoMenuItem);
+		// 添加"Redo"子菜单
+		JMenuItem redoMenuItem = new JMenuItem("Redo");
+		// 设置快捷键
+		redoMenuItem.setMnemonic('R');
+		redoMenuItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.CTRL_MASK));
+		// 添加监听
+		redoMenuItem.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				// TODO Auto-generated method stub
+				if ((codeListPtr == -1) || (codeListPtr + 1 == historyCode.size())) {
+					// 什么都不做
+				} else {
+					codeListPtr++;
+					codeArea.setText(historyCode.get(codeListPtr));
+				}
+			}
+
+		});
+		editMenu.add(redoMenuItem);
+
 		// 添加"Run"菜单
 		JMenu runMenu = new JMenu("Run");
 		// 设置快捷键
@@ -239,6 +296,8 @@ class MainFrame extends JFrame {
 		codeArea.setMargin(new Insets(10, 10, 10, 10));
 		codeArea.setBackground(Color.LIGHT_GRAY);
 		codeArea.getDocument().addDocumentListener(new TextChangedListener());
+		codeArea.addKeyListener(new KeyBoardListener());
+		codeArea.setEditable(false);
 		// 滚动
 		JScrollPane codeScroller = new JScrollPane(codeArea);
 		codeScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -428,6 +487,8 @@ class MainFrame extends JFrame {
 						file.addActionListener(new OpenFileActionListener());
 
 						isSaved = false;
+						codeArea.setEditable(true);
+						codeArea.setBackground(Color.WHITE);
 
 						// 关闭本窗口
 						newFrame.dispose();
@@ -465,6 +526,13 @@ class MainFrame extends JFrame {
 			fileName = file;
 			codeInfoLabel.setText("Code - " + fileName + " - " + codeFile.getLatestVersion());
 			isSaved = true;
+			codeArea.setEditable(true);
+			codeArea.setBackground(Color.WHITE);
+			while (historyCode.size() != 0) {
+				historyCode.remove(0);
+			}
+			historyCode.add(codeArea.getText());
+			codeListPtr = 0;
 		}
 
 	}
@@ -474,20 +542,84 @@ class MainFrame extends JFrame {
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			// TODO Auto-generated method stub
 			isSaved = false;
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			// TODO Auto-generated method stub
 			isSaved = false;
 		}
 
 		@Override
 		public void changedUpdate(DocumentEvent e) {
-			// TODO Auto-generated method stub
 			isSaved = false;
+		}
+
+	}
+
+	// 代码区焦点监听
+	// class CodeFocusListener implements FocusListener {
+	//
+	// @Override
+	// public void focusGained(FocusEvent e) {
+	// isEditing = true;
+	// }
+	//
+	// @Override
+	// public void focusLost(FocusEvent e) {
+	// isEditing = false;
+	// }
+	//
+	// }
+
+	// 键盘事件监听
+	class KeyBoardListener implements KeyListener {
+
+		@Override
+		public void keyTyped(KeyEvent e) {
+			if (((int) e.getKeyChar() == 46) || ((int) e.getKeyChar() == 44) || ((int) e.getKeyChar() == 60)
+					|| ((int) e.getKeyChar() == 62) || ((int) e.getKeyChar() == 91) || ((int) e.getKeyChar() == 93)
+					|| ((int) e.getKeyChar() == 43) || ((int) e.getKeyChar() == 45)) {
+				TimerTask task = new TimerTask() {
+
+					@Override
+					public void run() {
+						isTyping = false;
+						if (codeListPtr == 4) {
+							historyCode.remove(0);
+							historyCode.add(codeArea.getText());
+						} else if (codeListPtr + 1 < historyCode.size()) {
+							for (int i = codeListPtr + 1; i < historyCode.size(); i++) {
+								historyCode.remove(i);
+							}
+							historyCode.add(codeArea.getText());
+							codeListPtr++;
+						} else {
+							historyCode.add(codeArea.getText());
+							codeListPtr++;
+						}
+					}
+				};
+				if (isTyping) {
+					timer.cancel();
+					timer = new Timer();
+					timer.schedule(task, 500);
+				} else {
+					isTyping = true;
+					timer.schedule(task, 500);
+				}
+			}
+
+		}
+
+		@Override
+		public void keyPressed(KeyEvent e) {
+			// System.out.println("Pressed "+e.getKeyChar());
+		}
+
+		@Override
+		public void keyReleased(KeyEvent e) {
+			// System.out.println("Released "+e.getKeyChar());
 		}
 
 	}

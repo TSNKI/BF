@@ -6,7 +6,6 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 import rmi.RemoteHelper;
-import service.IOService;
 import ui.LogInFrame;
 
 public class ClientRunner {
@@ -32,7 +31,7 @@ public class ClientRunner {
 	}
 
 	private void initGUI() {
-		LogInFrame mainFrame = new LogInFrame();
+		new LogInFrame();
 	}
 
 	public void test() {
@@ -45,7 +44,6 @@ public class ClientRunner {
 	}
 
 	public static void main(String[] args) {
-		ClientRunner cr = new ClientRunner();
-		// cr.test();
+		new ClientRunner();
 	}
 }
